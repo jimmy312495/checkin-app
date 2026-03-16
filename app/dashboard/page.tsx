@@ -36,14 +36,26 @@ export default function DashboardPage() {
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   const handleLog = async (type: 'check_in' | 'check_out') => {
+    if ((type === 'check_in' && isWorking) || (type === 'check_out' && !isWorking)) {
+      return
+    }
+
     setActionLoading(true)
-    await fetch('/api/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type }),
-    })
-    await fetchLogs()
-    setActionLoading(false)
+    try {
+      const response = await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      await fetchLogs()
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   const handleSignOut = async () => {
@@ -55,7 +67,10 @@ export default function DashboardPage() {
   const today = getTodayTaipei()
   const todayLogs = allLogs.filter(l => getTaipeiDate(l.timestamp) === today)
   const todayTotal = sumDuration(pairLogs(todayLogs))
-  const isWorking = todayLogs.length > 0 && todayLogs[todayLogs.length - 1].type === 'check_in'
+  const latestLog = allLogs.length > 0 ? allLogs[allLogs.length - 1] : null
+  const isWorking = latestLog?.type === 'check_in'
+  const canCheckIn = !actionLoading && !isWorking
+  const canCheckOut = !actionLoading && isWorking
 
   // History grouped by date
   const dateMap = new Map<string, LogEntry[]>()
@@ -99,17 +114,17 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => handleLog('check_in')}
-            disabled={actionLoading}
+            disabled={!canCheckIn}
             className="bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl text-lg font-semibold disabled:opacity-50 transition"
           >
-            Check In
+            Clock In
           </button>
           <button
             onClick={() => handleLog('check_out')}
-            disabled={actionLoading}
+            disabled={!canCheckOut}
             className="bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl text-lg font-semibold disabled:opacity-50 transition"
           >
-            Check Out
+            Clock Out
           </button>
         </div>
 
@@ -124,7 +139,7 @@ export default function DashboardPage() {
                 {[...todayLogs].reverse().map(log => (
                   <li key={log.id} className="flex justify-between text-sm">
                     <span className={log.type === 'check_in' ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
-                      {log.type === 'check_in' ? '▶ Check In' : '■ Check Out'}
+                      {log.type === 'check_in' ? '▶ Clock In' : '■ Clock Out'}
                     </span>
                     <span className="font-mono text-gray-600">
                       {formatTaipeiTime(log.timestamp)}
@@ -159,7 +174,7 @@ export default function DashboardPage() {
                     {searchLogs.map(log => (
                       <li key={log.id} className="flex justify-between text-sm">
                         <span className={log.type === 'check_in' ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
-                          {log.type === 'check_in' ? '▶ Check In' : '■ Check Out'}
+                          {log.type === 'check_in' ? '▶ Clock In' : '■ Clock Out'}
                         </span>
                         <span className="font-mono text-gray-600">
                           {formatTaipeiTime(log.timestamp)}
