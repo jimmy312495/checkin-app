@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Clock from '@/components/Clock'
 import {
   pairLogs, sumDuration, formatDuration,
+  formatTaipeiTime,
   getTaipeiDate, getTodayTaipei,
   type LogEntry,
 } from '@/lib/time'
@@ -54,6 +55,7 @@ export default function DashboardPage() {
   const today = getTodayTaipei()
   const todayLogs = allLogs.filter(l => getTaipeiDate(l.timestamp) === today)
   const todayTotal = sumDuration(pairLogs(todayLogs))
+  const isWorking = todayLogs.length > 0 && todayLogs[todayLogs.length - 1].type === 'check_in'
 
   // History grouped by date
   const dateMap = new Map<string, LogEntry[]>()
@@ -90,7 +92,7 @@ export default function DashboardPage() {
 
         {/* Clock */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <Clock />
+          <Clock isWorking={isWorking} />
         </div>
 
         {/* Buttons */}
@@ -119,13 +121,13 @@ export default function DashboardPage() {
           ) : (
             <>
               <ul className="space-y-2 mb-3">
-                {todayLogs.map(log => (
+                {[...todayLogs].reverse().map(log => (
                   <li key={log.id} className="flex justify-between text-sm">
                     <span className={log.type === 'check_in' ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
                       {log.type === 'check_in' ? '▶ Check In' : '■ Check Out'}
                     </span>
                     <span className="font-mono text-gray-600">
-                      {new Date(log.timestamp).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })}
+                      {formatTaipeiTime(log.timestamp)}
                     </span>
                   </li>
                 ))}
@@ -160,7 +162,7 @@ export default function DashboardPage() {
                           {log.type === 'check_in' ? '▶ Check In' : '■ Check Out'}
                         </span>
                         <span className="font-mono text-gray-600">
-                          {new Date(log.timestamp).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })}
+                          {formatTaipeiTime(log.timestamp)}
                         </span>
                       </li>
                     ))}

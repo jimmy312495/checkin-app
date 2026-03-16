@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
-export default function Clock() {
+type ClockProps = {
+  isWorking?: boolean
+}
+
+export default function Clock({ isWorking = false }: ClockProps) {
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {
@@ -11,11 +15,15 @@ export default function Clock() {
   }, [])
 
   return (
-    <div className="text-center">
-      <p className="text-5xl font-mono font-bold tracking-widest">
-        {time.toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })}
+    <div className="mx-auto w-full max-w-md rounded-2xl bg-white/80 p-6 text-center  backdrop-blur-sm">
+      <p className="font-mono text-5xl font-bold tracking-tight text-black sm:text-6xl">
+        {time.toLocaleTimeString('zh-TW', {
+          timeZone: 'Asia/Taipei',
+          hour12: false,
+        })}
       </p>
-      <p className="text-gray-500 mt-1 text-sm">
+
+      <p className="mt-3 text-lg font-medium text-slate-600">
         {time.toLocaleDateString('zh-TW', {
           timeZone: 'Asia/Taipei',
           year: 'numeric',
@@ -23,6 +31,10 @@ export default function Clock() {
           day: 'numeric',
           weekday: 'long',
         })}
+      </p>
+
+      <p className={`mt-3 text-lg font-semibold ${isWorking ? 'text-green-700' : 'text-slate-500'}`}>
+        Current: {isWorking ? 'Working' : 'Not working'}
       </p>
     </div>
   )
