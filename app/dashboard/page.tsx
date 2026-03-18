@@ -25,6 +25,17 @@ export default function DashboardPage() {
   const supabase = createClient()
 
   const fetchLogs = useCallback(async () => {
+    const today = getTodayTaipei()
+    const cleanupKey = 'work_logs:lastCleanupDate'
+    const lastCleanup = typeof window !== 'undefined' ? localStorage.getItem(cleanupKey) : null
+
+    if (lastCleanup !== today) {
+      const cleanupResponse = await fetch('/api/log/cleanup', { method: 'POST' })
+      if (cleanupResponse.ok) {
+        localStorage.setItem(cleanupKey, today)
+      }
+    }
+
     const { data, error } = await supabase
       .from('work_logs')
       .select('*')
